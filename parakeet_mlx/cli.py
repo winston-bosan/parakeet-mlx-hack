@@ -233,7 +233,7 @@ def transcribe(
     local_attention: Annotated[
         bool,
         typer.Option(
-            "--full-attention/--local-attention",
+            "--local-attention/--full-attention",
             help="Use local attention (reduces intermediate memory usage for long audio)",
             envvar="PARAKEET_LOCAL_ATTENTION",
         ),
