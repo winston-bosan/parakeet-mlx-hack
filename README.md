@@ -37,16 +37,16 @@ parakeet-mlx <audio_files> [OPTIONS]
 
 ## Options
 
-- `--model` (default: `mlx-community/parakeet-tdt-0.6b-v2`)
+- `--model` (default: `mlx-community/parakeet-tdt-0.6b-v2`, env: `PARAKEET_MODEL`)
   - Hugging Face repository of the model to use
 
 - `--output-dir` (default: current directory)
   - Directory to save transcription outputs
 
-- `--output-format` (default: srt)
+- `--output-format` (default: srt, env: `PARAKEET_OUTPUT_FORMAT`)
   - Output format (txt/srt/vtt/json/all)
 
-- `--output-template` (default: `{filename}`)
+- `--output-template` (default: `{filename}`, env: `PARAKEET_OUTPUT_TEMPLATE`)
   - Template for output filenames, `{filename}`, `{index}`, `{date}` is supported.
 
 - `--highlight-words` (default: False)
@@ -55,20 +55,20 @@ parakeet-mlx <audio_files> [OPTIONS]
 - `--verbose` / `-v` (default: False)
   - Print detailed progress information
 
-- `--chunk-duration` (default: 120 seconds)
+- `--chunk-duration` (default: 120 seconds, env: `PARAKEET_CHUNK_DURATION`)
   - Chunking duration in seconds for long audio, `0` to disable chunking
 
-- `--overlap-duration` (default: 15 seconds)
+- `--overlap-duration` (default: 15 seconds, env: `PARAKEET_OVERLAP_DURATION`)
   - Overlap duration in seconds if using chunking
 
-- `--fp32` / `--bf16` (default: `bf16`)
+- `--fp32` / `--bf16` (default: `bf16`, env: `PARAKEET_FP32` - boolean)
   - Determine the precision to use
 
-- `--full-attention` / `--local-attention` (default: `full-attention`)
+- `--full-attention` / `--local-attention` (default: `full-attention`, env: `PARAKEET_LOCAL_ATTENTION` - boolean)
   - Use full attention or local attention (Local attention reduces intermediate memory usage)
   - Expected usage case is for long audio transcribing without chunking
 
-- `--local-attention-context-size` (default: 256)
+- `--local-attention-context-size` (default: 256, env: `PARAKEET_LOCAL_ATTENTION_CTX`)
   - Local attention context size(window) in frames of Parakeet model
 
 ## Examples

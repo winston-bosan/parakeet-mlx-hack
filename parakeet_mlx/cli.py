@@ -180,18 +180,26 @@ def transcribe(
         ),
     ],
     model: Annotated[
-        str, typer.Option(help="Hugging Face repository of model to use")
+        str,
+        typer.Option(
+            help="Hugging Face repository of model to use", envvar="PARAKEET_MODEL"
+        ),
     ] = "mlx-community/parakeet-tdt-0.6b-v2",
     output_dir: Annotated[
         Path, typer.Option(help="Directory to save transcriptions")
     ] = Path("."),
     output_format: Annotated[
-        str, typer.Option(help="Format for output files (txt, srt, vtt, json, all)")
+        str,
+        typer.Option(
+            help="Format for output files (txt, srt, vtt, json, all)",
+            envvar="PARAKEET_OUTPUT_FORMAT",
+        ),
     ] = "srt",
     output_template: Annotated[
         str,
         typer.Option(
-            help="Template for output filenames, e.g. '{filename}_{date}_{index}'"
+            help="Template for output filenames, e.g. '{filename}_{date}_{index}'",
+            envvar="PARAKEET_OUTPUT_TEMPLATE",
         ),
     ] = "{filename}",
     highlight_words: Annotated[
@@ -201,24 +209,33 @@ def transcribe(
     chunk_duration: Annotated[
         float,
         typer.Option(
-            help="Chunking duration in seconds for long audio, 0 to disable chunking."
+            help="Chunking duration in seconds for long audio, 0 to disable chunking.",
+            envvar="PARAKEET_CHUNK_DURATION",
         ),
     ] = 60 * 2,
     overlap_duration: Annotated[
-        float, typer.Option(help="Overlap duration in seconds if using chunking")
+        float,
+        typer.Option(
+            help="Overlap duration in seconds if using chunking",
+            envvar="PARAKEET_OVERLAP_DURATION",
+        ),
     ] = 15,
     verbose: Annotated[
         bool,
         typer.Option("--verbose", "-v", help="Print out process and debug messages"),
     ] = False,
     fp32: Annotated[
-        bool, typer.Option("--fp32/--bf16", help="Use FP32 precision")
+        bool,
+        typer.Option(
+            "--fp32/--bf16", help="Use FP32 precision", envvar="PARAKEET_FP32"
+        ),
     ] = False,
     local_attention: Annotated[
         bool,
         typer.Option(
             "--full-attention/--local-attention",
             help="Use local attention (reduces intermediate memory usage for long audio)",
+            envvar="PARAKEET_LOCAL_ATTENTION",
         ),
     ] = False,
     local_attention_context_size: Annotated[
@@ -226,6 +243,7 @@ def transcribe(
         typer.Option(
             "--local-attention-context-size",
             help="Local attention context size (Only applies if using local attention)",
+            envvar="PARAKEET_LOCAL_ATTENTION_CTX",
         ),
     ] = 256,
 ):
