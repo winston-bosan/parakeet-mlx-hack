@@ -214,6 +214,20 @@ def transcribe(
     fp32: Annotated[
         bool, typer.Option("--fp32/--bf16", help="Use FP32 precision")
     ] = False,
+    local_attention: Annotated[
+        bool,
+        typer.Option(
+            "--full-attention/--local-attention",
+            help="Use local attention (reduces intermediate memory usage for long audio)",
+        ),
+    ] = False,
+    local_attention_context_size: Annotated[
+        int,
+        typer.Option(
+            "--local-attention-context-size",
+            help="Local attention context size (Only applies if using local attention)",
+        ),
+    ] = 256,
 ):
     """
     Transcribe audio files using Parakeet MLX models.
@@ -223,6 +237,12 @@ def transcribe(
 
     try:
         loaded_model = from_pretrained(model, dtype=bfloat16 if not fp32 else float32)
+
+        if local_attention:
+            loaded_model.encoder.set_attention_model(
+                "rel_pos_local_attn",
+                (local_attention_context_size, local_attention_context_size),
+            )
         if verbose:
             print("[green]Model loaded successfully.[/green]")
     except Exception as e:

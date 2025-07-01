@@ -64,6 +64,13 @@ parakeet-mlx <audio_files> [OPTIONS]
 - `--fp32` / `--bf16` (default: `bf16`)
   - Determine the precision to use
 
+- `--full-attention` / `--local-attention` (default: `full-attention`)
+  - Use full attention or local attention (Local attention reduces intermediate memory usage)
+  - Expected usage case is for long audio transcribing without chunking
+
+- `--local-attention-context-size` (default: 256)
+  - Local attention context size(window) in frames of Parakeet model
+
 ## Examples
 
 ```bash
@@ -115,6 +122,23 @@ model = from_pretrained("mlx-community/parakeet-tdt-0.6b-v2")
 result = model.transcribe("audio_file.wav", chunk_duration=60 * 2.0, overlap_duration=15.0)
 
 print(result.sentences)
+```
+
+Use local attention:
+
+```py
+from parakeet_mlx import from_pretrained
+
+model = from_pretrained("mlx-community/parakeet-tdt-0.6b-v2")
+
+model.encoder.set_attention_model(
+    "rel_pos_local_attn", # Follows NeMo's naming convention
+    (256, 256),
+)
+
+result = model.transcribe("audio_file.wav")
+
+print(result.text)
 ```
 
 ## Timestamp Result
