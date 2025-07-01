@@ -138,7 +138,7 @@ model.encoder.set_attention_model(
 
 result = model.transcribe("audio_file.wav")
 
-print(result.text)
+print(result.sentences)
 ```
 
 ## Timestamp Result
