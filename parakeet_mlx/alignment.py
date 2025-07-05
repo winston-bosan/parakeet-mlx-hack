@@ -77,7 +77,7 @@ def tokens_to_sentences(tokens: list[AlignedToken]) -> list[AlignedSentence]:
 def sentences_to_result(sentences: list[AlignedSentence]) -> AlignedResult:
     return AlignedResult("".join(sentence.text for sentence in sentences), sentences)
 
-
+# TODO: find out why there is numeric instability at boundary and reverse this
 def merge_longest_contiguous(
     a: list[AlignedToken],
     b: list[AlignedToken],
@@ -93,70 +93,25 @@ def merge_longest_contiguous(
     if a_end_time <= b_start_time:
         return a + b
 
-    overlap_a = [token for token in a if token.end > b_start_time - overlap_duration]
-    overlap_b = [token for token in b if token.start < a_end_time + overlap_duration]
-
-    enough_pairs = len(overlap_a) // 2
-
-    if len(overlap_a) < 2 or len(overlap_b) < 2:
-        cutoff_time = (a_end_time + b_start_time) / 2
-        return [t for t in a if t.end <= cutoff_time] + [
-            t for t in b if t.start >= cutoff_time
-        ]
-
-    best_contiguous = []
-    for i in range(len(overlap_a)):
-        for j in range(len(overlap_b)):
-            if (
-                overlap_a[i].id == overlap_b[j].id
-                and abs(overlap_a[i].start - overlap_b[j].start) < overlap_duration / 2
-            ):
-                current = []
-                k, l = i, j
-                while (
-                    k < len(overlap_a)
-                    and l < len(overlap_b)
-                    and overlap_a[k].id == overlap_b[l].id
-                    and abs(overlap_a[k].start - overlap_b[l].start)
-                    < overlap_duration / 2
-                ):
-                    current.append((k, l))
-                    k += 1
-                    l += 1
-
-                if len(current) > len(best_contiguous):
-                    best_contiguous = current
-
-    if len(best_contiguous) >= enough_pairs:
-        a_start_idx = len(a) - len(overlap_a)
-        lcs_indices_a = [a_start_idx + pair[0] for pair in best_contiguous]
-        lcs_indices_b = [pair[1] for pair in best_contiguous]
-
-        result = []
-        result.extend(a[: lcs_indices_a[0]])
-
-        for i in range(len(best_contiguous)):
-            idx_a = lcs_indices_a[i]
-            idx_b = lcs_indices_b[i]
-
-            result.append(a[idx_a])
-
-            if i < len(best_contiguous) - 1:
-                next_idx_a = lcs_indices_a[i + 1]
-                next_idx_b = lcs_indices_b[i + 1]
-
-                gap_tokens_a = a[idx_a + 1 : next_idx_a]
-                gap_tokens_b = b[idx_b + 1 : next_idx_b]
-
-                if len(gap_tokens_b) > len(gap_tokens_a):
-                    result.extend(gap_tokens_b)
-                else:
-                    result.extend(gap_tokens_a)
-
-        result.extend(b[lcs_indices_b[-1] + 1 :])
-        return result
-    else:
-        raise RuntimeError(f"No pairs exceeding {enough_pairs}")
+    # simple midpoint merge
+    overlap_start = b_start_time
+    overlap_end = a_end_time
+    overlap_midpoint = (overlap_start + overlap_end) / 2
+    
+    # tiny earlier cutoff to get more chunk A tokens
+    cutoff_time = overlap_midpoint - 0.1
+    
+    # ..A |<-mid point B..
+    result = []
+    for token in a:
+        if token.end <= cutoff_time:
+            result.append(token)
+    
+    for token in b:
+        if token.start > cutoff_time:
+            result.append(token)
+    
+    return result
 
 
 def merge_longest_common_subsequence(
@@ -165,88 +120,5 @@ def merge_longest_common_subsequence(
     *,
     overlap_duration: float,
 ):
-    if not a or not b:
-        return b if not a else a
-
-    a_end_time = a[-1].end
-    b_start_time = b[0].start
-
-    if a_end_time <= b_start_time:
-        return a + b
-
-    overlap_a = [token for token in a if token.end > b_start_time - overlap_duration]
-    overlap_b = [token for token in b if token.start < a_end_time + overlap_duration]
-
-    if len(overlap_a) < 2 or len(overlap_b) < 2:
-        cutoff_time = (a_end_time + b_start_time) / 2
-        return [t for t in a if t.end <= cutoff_time] + [
-            t for t in b if t.start >= cutoff_time
-        ]
-
-    dp = [[0 for _ in range(len(overlap_b) + 1)] for _ in range(len(overlap_a) + 1)]
-
-    for i in range(1, len(overlap_a) + 1):
-        for j in range(1, len(overlap_b) + 1):
-            if (
-                overlap_a[i - 1].id == overlap_b[j - 1].id
-                and abs(overlap_a[i - 1].start - overlap_b[j - 1].start)
-                < overlap_duration / 2
-            ):
-                dp[i][j] = dp[i - 1][j - 1] + 1
-            else:
-                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
-
-    lcs_pairs = []
-    i, j = len(overlap_a), len(overlap_b)
-
-    while i > 0 and j > 0:
-        if (
-            overlap_a[i - 1].id == overlap_b[j - 1].id
-            and abs(overlap_a[i - 1].start - overlap_b[j - 1].start)
-            < overlap_duration / 2
-        ):
-            lcs_pairs.append((i - 1, j - 1))
-            i -= 1
-            j -= 1
-        elif dp[i - 1][j] > dp[i][j - 1]:
-            i -= 1
-        else:
-            j -= 1
-
-    lcs_pairs.reverse()
-
-    if not lcs_pairs:
-        cutoff_time = (a_end_time + b_start_time) / 2
-        return [t for t in a if t.end <= cutoff_time] + [
-            t for t in b if t.start >= cutoff_time
-        ]
-
-    a_start_idx = len(a) - len(overlap_a)
-    lcs_indices_a = [a_start_idx + pair[0] for pair in lcs_pairs]
-    lcs_indices_b = [pair[1] for pair in lcs_pairs]
-
-    result = []
-
-    result.extend(a[: lcs_indices_a[0]])
-
-    for i in range(len(lcs_pairs)):
-        idx_a = lcs_indices_a[i]
-        idx_b = lcs_indices_b[i]
-
-        result.append(a[idx_a])
-
-        if i < len(lcs_pairs) - 1:
-            next_idx_a = lcs_indices_a[i + 1]
-            next_idx_b = lcs_indices_b[i + 1]
-
-            gap_tokens_a = a[idx_a + 1 : next_idx_a]
-            gap_tokens_b = b[idx_b + 1 : next_idx_b]
-
-            if len(gap_tokens_b) > len(gap_tokens_a):
-                result.extend(gap_tokens_b)
-            else:
-                result.extend(gap_tokens_a)
-
-    result.extend(b[lcs_indices_b[-1] + 1 :])
-
-    return result
+    # forgive me for i have sinned
+    return merge_longest_contiguous(a, b, overlap_duration=overlap_duration)
