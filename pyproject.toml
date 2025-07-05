@@ -3,9 +3,9 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "parakeet-mlx"
-version = "0.3.3"
-description = "An implementation of the Nvidia's Parakeet models for Apple Silicon using MLX."
+name = "parakeet-mlx-hack"
+version = "0.3.4"
+description = "An hacky fork of a good implementation of the Nvidia's Parakeet models for Apple Silicon using MLX."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -29,8 +29,8 @@ keywords = [
 ]
 
 [project.urls]
-Repository = "https://github.com/senstella/parakeet-mlx.git"
-Issues = "https://github.com/senstella/parakeet-mlx/issues"
+Repository = "https://github.com/winston-bosan/parakeet-mlx.git"
+Issues = "https://github.com/winston-bosan/parakeet-mlx/issues"
 
 [project.scripts]
 parakeet-mlx = "parakeet_mlx.cli:app"
